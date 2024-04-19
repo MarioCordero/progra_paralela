@@ -12,8 +12,9 @@ int main(void){
 
     pthread_t thread;
     int argument = 42;
+    char *mensaje = "hola";
     
-    if (pthread_create(&thread, NULL, print_message, &argument) != 0){
+    if (pthread_create(&thread, NULL, print_message(mensaje), &argument) != 0){
         perror("Error creating thread\n");
         return 1;
     }

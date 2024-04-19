@@ -1,16 +1,29 @@
+# NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
 all: compile_general execute_general
+valgrind: compile_valgrind execute_valgrind
+# NOTE: Do not use ThreadSanitizer in big programs or in production
+ThreadSanitizer: compile_ThreadSanitizer execute_general
+ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
-# COMPILERS INSTANCES
-# gcc -o practica-01-fork-01 practica-01-fork-01.c
-# gcc -o practica-01-fork-01 practica-01-fork-02.c
-# gcc -o practica-01-fork-01 practica-01-fork-03.c
-# gcc -o practica-01-fork-01 practica-01-fork-04.c
-# gcc -o practica-01-fork-01 practica-01-fork-05.c
-# gcc -o practica-01-fork-01 practica-01-fork-06.c
-# gcc -o practica-01-fork-01 practica-01-fork-07.c
+# gcc -pthread -o executeme pthread01.c
+
+# COMPILERS INSTANCES pthread
 compile_general:
-	gcc -o practica-01-fork-01 practica-01-fork-08.c
+	gcc -pthread -o executeme pthread02.c
+
+compile_valgrind:
+	gcc -pthread -g -o executeme pthread02.c
+
+compile_ThreadSanitizer:
+	gcc -pthread -fsanitize=thread -o executeme pthread02.c
+
+compile_ThreadSanitizer_clang:
+	clang -pthread -fsanitize=thread -o executeme pthread02.c
+
 
 # EXECUTERS INSTANCES
 execute_general:
-	./practica-01-fork-01
+	./executeme
+
+execute_valgrind:
+	valgrind --tool=helgrind ./executeme
