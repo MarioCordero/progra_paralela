@@ -5,14 +5,12 @@ valgrind: compile_valgrind execute_valgrind
 ThreadSanitizer: compile_ThreadSanitizer execute_general
 ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
-# gcc -pthread -o executeme pthread01.c
-
 # COMPILERS INSTANCES pthread
 compile_general:
-	gcc -pthread -o executeme pthread02.c
+	gcc -pthread -o executeme pthread03.c
 
 compile_valgrind:
-	gcc -pthread -g -o executeme pthread02.c
+	gcc -pthread -g -o executeme pthread04argsThreads.c
 
 compile_ThreadSanitizer:
 	gcc -pthread -fsanitize=thread -o executeme pthread02.c
