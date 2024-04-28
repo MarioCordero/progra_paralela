@@ -1,3 +1,3 @@
-# PARALELA.practica1
+# PARALELA.Tarea1
 Mario Cordero Aguilar
 C22306
