@@ -1,3 +1,3 @@
-# PARALELA.Tarea2
+# PARALELA.Proyecto #1
 Mario Cordero Aguilar
 C22306

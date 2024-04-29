@@ -1,14 +1,30 @@
+# NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
 all: compile_general execute_general
-compile: compile_general
+valgrind: compile_valgrind execute_valgrind
+
+# NOTE: Do not use ThreadSanitizer in big programs or in production
+ThreadSanitizer: compile_ThreadSanitizer execute_general
+ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
 # COMPILERS INSTANCES
 compile_general:
-	gcc -o executeme main.c -lm -pthread
+	gcc -pthread -o executeme calcularPImsg01.c -lm
+
+compile_valgrind:
+	gcc -pthread -g -o executeme calcularPImsg01.c -lm
+
+compile_ThreadSanitizer:
+	gcc -pthread -fsanitize=thread -o executeme calcularPImsg01.c -lm
+
+compile_ThreadSanitizer_clang:
+	clang -pthread -fsanitize=thread -o executeme calcularPImsg01.c
 
 # EXECUTERS INSTANCES
 execute_general:
-	./executeme
+	time ./executeme $(ARGS)
 
+execute_valgrind:
+	valgrind --tool=helgrind time ./executeme $(ARGS)
 
 
 # The math library must be linked in when building the executable. How to do this varies by environment, but in Linux/Unix, just add -lm to the command:
