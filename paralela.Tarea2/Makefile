@@ -9,12 +9,15 @@ ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 # gcc -pthread -o executeme calcularPImsg01.c -lm
 # gcc -pthread -g -o executeme calcularPImsg01.2.1.c -lm
 
+# gcc -pthread -o executeme calcularPImsg01.2.3.c -lm
+# gcc -pthread -g -o executeme calcularPImsg01.2.3.c -lm
+
 # COMPILERS INSTANCES
 compile_general:
-	gcc -pthread -o executeme calcularPImsg01.2.3.c -lm
+	gcc -pthread -o executeme calcularPImsg01.2.4.c -lm
 
 compile_valgrind:
-	gcc -pthread -g -o executeme calcularPImsg01.2.1.c -lm
+	gcc -pthread -g -o executeme calcularPImsg01.2.4.c -lm
 
 compile_ThreadSanitizer:
 	gcc -pthread -fsanitize=thread -o executeme calcularPImsg01.c -lm

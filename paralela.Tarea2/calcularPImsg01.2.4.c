@@ -21,11 +21,12 @@ int total_points;
 
 void *throw_darts(void *arg){
 
-    int *pipefds = (int *)arg; // CASTEO A int* PARA OBTENER LA PIPE
+    int *local_points = (int *)malloc(sizeof(int));
+    *local_points = 0;
 
-    int local_points = 0;
     int childID = (uintptr_t )arg;
     int points_per_thread = total_points / total_threads;
+
     unsigned int seed = time(NULL) * (childID + 1);
 
     for (int i = 0; i < points_per_thread; i++){
@@ -34,18 +35,13 @@ void *throw_darts(void *arg){
         double y = (double)rand_r(&seed) / RAND_MAX;
         if (sqrt(x * x + y * y) <= 1){
 
-            local_points++;
+            (*local_points)++;
 
         }
     }
 
-    // USAR EL PIPE PARA ENVIAR LOS MENSAJES
-    // ABRIR FIFO EN MODO ESCRITURA
-    pthread_mutex_lock(&mutex);
-    write(pipefds[1], &local_points, sizeof(local_points)); // ESCRITURA
-    printf("\nPUNTOS ENCOLADOS: %i", local_points);
-    pthread_mutex_unlock(&mutex);
 
+    pthread_exit(local_points);
     return NULL;
 }
 
@@ -56,9 +52,6 @@ int main(int argc, char *argv[]){
     // RELOJ
     struct timespec before;
     clock_gettime(CLOCK_MONOTONIC, &before);
-
-    // DECLARA ARRAY DE INDENTIFICADORES DE HILO
-    pthread_t threads[MAX_THREADS];
 
     if (argc != 3){
 
@@ -86,19 +79,16 @@ int main(int argc, char *argv[]){
 
     }
 
-    int pipefds[2];
-    // Crear un pipe
-    if (pipe(pipefds) == -1) {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
+    // DECLARA ARRAY DE INDENTIFICADORES DE HILO
+    pthread_t threads[MAX_THREADS];
+    int *results[MAX_THREADS];
 
     pthread_mutex_init(&mutex, NULL);
 
     // IMPLEMENTACIÓN Y CREACIÓN DE LOS HILOS
     for (int i = 0; i < total_threads; i++) { // POR CADA ITERACIÓN SE USA UN ID DE HILO
 
-        if (pthread_create(&threads[i], NULL, throw_darts, (void *)pipefds) != 0) {
+        if (pthread_create(&threads[i], NULL, throw_darts, &i) != 0) {
             perror("Error creating thread\n");
             return 1;
         }
@@ -107,26 +97,12 @@ int main(int argc, char *argv[]){
 
     // ESPERAR A QUE LOS HILOS TERMINEN LA EJECUCIÓN PARA QUE NO HAYA PROBLEMAS
     for (int i = 0; i < total_threads; i++) {
-        pthread_join(threads[i], NULL);
+        pthread_join(threads[i], (void **)&results[i]);
+        points_inside_circle += *results[i];
+        free(results[i]);
     }
-
-
-    points_inside_circle = 0;
-    // VACIAR LA PIPE Y OBTENER LOS VALORES
-    
-    close(pipefds[1]);
-    for(int i=0 ; i < total_threads ; i++){
-
-        int localPoints =0;
-        read(pipefds[0], &localPoints, sizeof(localPoints));
-        points_inside_circle = points_inside_circle + localPoints;
-
-    }
-
-    close(pipefds[0]); // CERRAR LECTURA
 
     double pi = 4.0 * points_inside_circle / total_points;
-
     printf("\n\nValor de pi: %f\n\n", pi);
 
     // RELOJ
@@ -136,8 +112,6 @@ int main(int argc, char *argv[]){
     long secs = after.tv_sec-before.tv_sec;
     uint64_t nanosecs = ((after.tv_sec*1000000000) + after.tv_nsec)-((before.tv_sec*1000000000) + before.tv_nsec);
     printf("%ld sec, %ld nanosecs. \n\n", secs, nanosecs);
-
-    pthread_mutex_destroy(&mutex);
 
     return 0;
 }
