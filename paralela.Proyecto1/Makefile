@@ -5,22 +5,6 @@ valgrind: compile_valgrind execute_valgrind
 ThreadSanitizer: compile_ThreadSanitizer execute_general
 ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
-# gcc -pthread -o executeme calcPi.c
-
-# gcc -pthread -o executeme calcPi_pthread01.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread01.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread02.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread02.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread03.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread03.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread04.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread04.c -lm
-
-
-
 # COMPILERS INSTANCES pthread
 compile_general:
 	gcc -pthread -o executeme calcPi_pthread05.c -lm
