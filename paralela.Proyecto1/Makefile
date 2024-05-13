@@ -7,7 +7,7 @@ ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
 # COMPILERS INSTANCES pthread
 compile_general:
-	gcc -pthread -o executeme calcPi_pthread05.c -lm
+	g++ -o executeme main.cpp
 
 compile_valgrind:
 	gcc -pthread -g -o executeme calcPi_pthread04.c -lm
@@ -21,7 +21,7 @@ compile_ThreadSanitizer_clang:
 
 # EXECUTERS INSTANCES
 execute_general:
- 	./executeme $(ARGS)
+	./executeme
 
 execute_valgrind:
 	valgrind --tool=helgrind ./executeme $(ARGS)

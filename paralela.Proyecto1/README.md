@@ -17,7 +17,9 @@ g. ¿Qué funciona y qué no funciona?
 
 <!-- LINEAS DE PRUEBA -->
 
-<!-- Lorem ipsum dolor sit amet,
+<!--
+
+Lorem ipsum dolor sit amet,
 consectetur adipiscing elit.
 Pellentesque habitant morbi
 tristique senectus et netus
@@ -90,4 +92,6 @@ commodo a, sodales sit amet,
 nisi. Pellentesque fermentum
 dolor. Aliquam quam lectus,
 facilisis auctor, ultrices ut,
-elementum vulputate, nunc. -->
+elementum vulputate, nunc. 
+
+-->
