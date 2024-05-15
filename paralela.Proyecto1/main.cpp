@@ -1,52 +1,60 @@
 #include <iostream>
 #include <string>
 #include <queue>
+#include <thread>
+#include <mutex>
 
 using namespace std;
 
-//Número de líneas por cola
-const int linesPerElement = 1;
+// Número de líneas por hilo
+const int linesPerThread = 1;
+
+// Mutex para sincronizar la salida en la consola
+mutex mtx;
+
+// // Función para contar palabras en una línea
+// void contarPalabras(string linea, int& contador) {
+//     // Contar palabras en la línea
+//     int palabras = 0;
+//     size_t pos = 0;
+//     while ((pos = linea.find_first_not_of(' ', pos)) != string::npos) {
+//         ++palabras;
+//         pos = linea.find_first_of(' ', pos);
+//     }
+
+//     // Incrementar el contador total
+//     mtx.lock(); // Bloquear el mutex antes de imprimir
+//     contador += palabras;
+//     mtx.unlock(); // Desbloquear el mutex después de imprimir
+// }
 
 int main() {
-    //Cola para almacenar las líneas de texto
-    queue<string> cola;
-    //Uso de String
-    string linea;
 
-    cout << "Ingrese el texto. Ctrl+D para finalizar." << endl;
+    //Cola para almacenar los hilos disponibles
+    queue<thread> hilos;
+
+    cout << "\n\tIngrese el texto. Ctrl+D para finalizar." << endl;
 
     int contador = 0;
 
-    while (getline(cin, linea)) {
+    while (!cin.eof()) {
 
-        //Encolar la linea
-        cola.push(linea);
-        ++contador;
+        string linea;
+        getline(cin, linea);
+        contador++;
 
-        //Sí el contador alcanza el límite, imprimir las líneas de la cola
-        if (contador == linesPerElement) {
+        //Asignar cada linea leida a un hilo que debe estar encolado
+        cout << "Linea #" << contador << ": \t" << linea << endl;
 
-            cout << "\n\n Limite exedido. Contenido de la cola: \n\n";
-
-            while (!cola.empty()) {
-                //Imprimir la línea de la parte delantera de la cola
-                cout << cola.front() << endl;
-                //Eliminar la línea de la cola
-                cola.pop();
-            }
-            //Reiniciar el contador
-            contador = 0;
-        }
     }
 
-    // Imprimir las líneas restantes en la cola
-    if (!cola.empty()) {
-        cout << "\n\nContenido de la cola:\n\n";
-        while (!cola.empty()) {
-            cout << cola.front() << endl; // Imprimir la línea de la parte delantera de la cola
-            cola.pop(); // Eliminar la línea de la cola
-        }
-    }
+    //Join para que los hilos terminen bien
+    // for (auto& t : threads) {
+    //     t.join();
+    // }
+
+    // Imprimir el total de palabras
+    cout << "\n\nTotal de palabras: " << contador << endl;
 
     return 0;
 }
