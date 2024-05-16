@@ -6,37 +6,62 @@
 
 using namespace std;
 
-// Número de líneas por hilo
-const int linesPerThread = 1;
-
 // Mutex para sincronizar la salida en la consola
-mutex mtx;
+pthread_mutex_t mtx;
 
-// // Función para contar palabras en una línea
-// void contarPalabras(string linea, int& contador) {
-//     // Contar palabras en la línea
-//     int palabras = 0;
-//     size_t pos = 0;
-//     while ((pos = linea.find_first_not_of(' ', pos)) != string::npos) {
-//         ++palabras;
-//         pos = linea.find_first_of(' ', pos);
-//     }
+// Definir el total de hilos a usar
+#define TOTAL_THREADS 4
 
-//     // Incrementar el contador total
-//     mtx.lock(); // Bloquear el mutex antes de imprimir
-//     contador += palabras;
-//     mtx.unlock(); // Desbloquear el mutex después de imprimir
-// }
+// Cola para almacenar los hilos disponibles
+queue<thread> hilosDisponibles;
+
+// Funcion X, en un futuro aqui se van a leer los datos
+void funcionHilo() {
+
+    // Realizar alguna tarea aquí...
+
+    // Aquí simplemente mostramos un mensaje
+    {
+        pthread_mutex_lock(&mtx);
+        cout << "\nHilo " << this_thread::get_id() << " ejecutando..." << endl;
+        pthread_mutex_unlock(&mtx);
+    }
+
+    // Dormir para simular alguna tarea
+    this_thread::sleep_for(chrono::milliseconds(1000));
+}
 
 int main() {
 
-    //Cola para almacenar los hilos disponibles
-    queue<thread> hilos;
+    // Definir cuantos hilos se van a usar, una constante o una variable que define cuántos hilos se van a crear
+    pthread_t threads[TOTAL_THREADS];
 
-    cout << "\n\tIngrese el texto. Ctrl+D para finalizar." << endl;
+    //Inicialización de Mutex para evitar errores de sincronización
+    pthread_mutex_init(&mtx, NULL);
+    
+    // Vector de hilos
+    std::vector<std::thread> vectorHilos;
 
+    // Crear los hilos sin asignarles una función
+    pthread_mutex_lock(&mtx);
+    for (int i = 0; i < TOTAL_THREADS; ++i) {
+        hilosDisponibles.emplace(funcionHilo);
+        // emplace_back: Construye un nuevo objeto directamente en el lugar del final del vector, pasando los argumentos necesarios al 
+        // constructor del objeto. Esto significa que no se realiza una copia ni un movimiento del objeto, sino que se crea directamente 
+        // en el contenedor. Es útil cuando estás construyendo objetos en el lugar y no quieres hacer una copia adicional.
+    }
+    pthread_mutex_unlock(&mtx);
+
+    cout << "Hilos creados y encolados para su uso." << endl;
+
+    
+
+    // Ahora, puedes obtener un hilo disponible de la cola y asignarle una tarea
+    // Supongamos que deseamos utilizar un hilo para imprimir un mensaje
+
+
+    cout << "\n\tIngrese el texto. Ctrl+D para finalizar.\n" << endl;
     int contador = 0;
-
     while (!cin.eof()) {
 
         string linea;
@@ -47,14 +72,31 @@ int main() {
         cout << "Linea #" << contador << ": \t" << linea << endl;
 
     }
+    
+    // Esperar a que todos los hilos terminen
+    pthread_mutex_lock(&mtx);
+    cout<<"\nUniendo hilos\n";
+    contador = 1;
+    while (!hilosDisponibles.empty()) {
+        thread hilo = move(hilosDisponibles.front());
+        hilosDisponibles.pop();
+        hilo.join();
+        cout<<"\tSe ha finalizado " << contador << " hilo."<<endl;
+        contador++;
+    }
+    pthread_mutex_unlock(&mtx);
 
-    //Join para que los hilos terminen bien
-    // for (auto& t : threads) {
-    //     t.join();
-    // }
 
-    // Imprimir el total de palabras
-    cout << "\n\nTotal de palabras: " << contador << endl;
 
+    // //Join para que los hilos terminen bien
+    // // for (auto& t : threads) {
+    // //     t.join();
+    // // }
+
+    // // Imprimir el total de palabras
+    // cout << "\n\nTotal de palabras: " << contador << endl;
+
+    //Destruir el mutex
+    pthread_mutex_destroy(&mtx);
     return 0;
 }
