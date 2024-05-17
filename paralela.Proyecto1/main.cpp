@@ -10,93 +10,94 @@ using namespace std;
 pthread_mutex_t mtx;
 
 // Definir el total de hilos a usar
-#define TOTAL_THREADS 4
+#define TOTAL_THREADS 5
 
-// Cola para almacenar los hilos disponibles
-queue<thread> hilosDisponibles;
+// Se crea el struct para pasar el argumento a los hilos, el cual es principalmente la cola
+struct threadData {
+    queue<string> *lineas;
+};
 
-// Funcion X, en un futuro aqui se van a leer los datos
-void funcionHilo() {
 
-    // Realizar alguna tarea aquí...
+// ---------------------------------------METODOS-------------------------------------------//
+void *printQueue(void *threadDataPointer){ // El parametro de esta funcion es un puntero generico, un puntero generico es un puntero que puede apuntar a cualquier tipo de dato
 
-    // Aquí simplemente mostramos un mensaje
-    {
-        pthread_mutex_lock(&mtx);
-        cout << "\nHilo " << this_thread::get_id() << " ejecutando..." << endl;
-        pthread_mutex_unlock(&mtx);
+    // Recibir correctamente el struct y desreferenciarlo
+    struct threadData *data = (struct threadData *)threadDataPointer;
+    // Inicializar una cola con la direccion de memoria de la cola usada
+    queue<string> *lineas = data->lineas;
+
+    //Lock
+    pthread_mutex_lock(&mtx);
+
+    if(!lineas->empty()) {
+        cout << lineas->front() << endl;
+        lineas->pop();
     }
 
-    // Dormir para simular alguna tarea
-    this_thread::sleep_for(chrono::milliseconds(1000));
+    //Unlock
+    pthread_mutex_unlock(&mtx);
+    
+    pthread_exit(NULL);
+
 }
 
+
+// -----------------------------------------MAIN--------------------------------------------//
 int main() {
 
     // Definir cuantos hilos se van a usar, una constante o una variable que define cuántos hilos se van a crear
     pthread_t threads[TOTAL_THREADS];
 
-    //Inicialización de Mutex para evitar errores de sincronización
+    // Inicialización de Mutex para evitar errores de sincronización
     pthread_mutex_init(&mtx, NULL);
-    
-    // Vector de hilos
-    std::vector<std::thread> vectorHilos;
 
-    // Crear los hilos sin asignarles una función
-    pthread_mutex_lock(&mtx);
-    for (int i = 0; i < TOTAL_THREADS; ++i) {
-        hilosDisponibles.emplace(funcionHilo);
-        // emplace_back: Construye un nuevo objeto directamente en el lugar del final del vector, pasando los argumentos necesarios al 
-        // constructor del objeto. Esto significa que no se realiza una copia ni un movimiento del objeto, sino que se crea directamente 
-        // en el contenedor. Es útil cuando estás construyendo objetos en el lugar y no quieres hacer una copia adicional.
-    }
-    pthread_mutex_unlock(&mtx);
+    // Cola para almacenar las líneas leídas por entrada estandar
+    queue<string> lineasSTD;
 
-    cout << "Hilos creados y encolados para su uso." << endl;
-
-    
-
-    // Ahora, puedes obtener un hilo disponible de la cola y asignarle una tarea
-    // Supongamos que deseamos utilizar un hilo para imprimir un mensaje
-
+    // Declarar la linea donde se va a almacenar lo leido por entrada estandar
+    string linea;
+    int contador = 0;
 
     cout << "\n\tIngrese el texto. Ctrl+D para finalizar.\n" << endl;
-    int contador = 0;
-    while (!cin.eof()) {
+    while (getline(cin, linea)) {
 
-        string linea;
-        getline(cin, linea);
+        // Encolar la linea leida por entrada estandar
+        lineasSTD.push(linea);
+        // Aumentar el contador
         contador++;
 
-        //Asignar cada linea leida a un hilo que debe estar encolado
-        cout << "Linea #" << contador << ": \t" << linea << endl;
+        if(contador == 5){
+            
+            cout << "\nLimite de lineas alcanzado, imprimiendo...\n" << endl;
+            // Inicializar el struct con la direccion de memoria de la cola
+            threadData info;
+            // En este struct creado, asignarle el atributo "lineas" con la direccion de memoria de la cola
+            info.lineas = &lineasSTD;
+
+            for (int i = 0; i < TOTAL_THREADS; i++) { //Por cada iteración se usa un identificador de hilo
+            
+                if (pthread_create(&threads[i], NULL, printQueue, &info) != 0) { //Se esta enviando como argumento un struct que adentro tiene la direccion de memoria de la cola
+                    perror("Error creating thread\n");
+                    return 1;
+                }
+
+            }
+
+            //Esperar a que los hilos terminen la ejecución para cerrarlos y terminar el programa
+            for (int i = 0; i < TOTAL_THREADS; i++) {
+                pthread_join(threads[i], NULL);
+            }
+
+            //Reiniciar contador
+            contador = 0;
+        }
 
     }
     
     // Esperar a que todos los hilos terminen
-    pthread_mutex_lock(&mtx);
-    cout<<"\nUniendo hilos\n";
-    contador = 1;
-    while (!hilosDisponibles.empty()) {
-        thread hilo = move(hilosDisponibles.front());
-        hilosDisponibles.pop();
-        hilo.join();
-        cout<<"\tSe ha finalizado " << contador << " hilo."<<endl;
-        contador++;
-    }
-    pthread_mutex_unlock(&mtx);
+    // pthread_mutex_lock(&mtx);
+    // pthread_mutex_unlock(&mtx);
 
-
-
-    // //Join para que los hilos terminen bien
-    // // for (auto& t : threads) {
-    // //     t.join();
-    // // }
-
-    // // Imprimir el total de palabras
-    // cout << "\n\nTotal de palabras: " << contador << endl;
-
-    //Destruir el mutex
     pthread_mutex_destroy(&mtx);
     return 0;
 }
