@@ -1,77 +1,103 @@
 #include <iostream>
-#include <fstream>
 #include <string>
+#include <queue>
 #include <thread>
-#include <vector>
 #include <mutex>
 
 using namespace std;
 
-const int BUFFER_SIZE = 8192; // Tamaño del buffer
-const int LINES_PER_FILE = 20; // Número de líneas por archivo
-mutex mtx; // Mutex para garantizar exclusión mutua en la escritura del archivo
-int lineasTotales = 0; // Contador de líneas totales
+// Mutex para sincronizar la salida en la consola
+pthread_mutex_t mtx;
 
-// Función para leer datos y escribirlos en el archivo
-void leerYGuardar(const string& nombreArchivo) {
-    char buffer[BUFFER_SIZE];
-    ifstream archivo;
-    archivo.rdbuf()->pubsetbuf(0, 0); // Desactivar el buffer de entrada para evitar superposición con el buffer de salida
+// Definir el total de hilos a usar
+#define TOTAL_THREADS 5
 
-    while (true) {
-        // Bloquear el acceso al archivo para evitar superposición
-        mtx.lock();
-        cin.read(buffer, BUFFER_SIZE);
-        int numBytesLeidos = cin.gcount();
-        mtx.unlock();
+// Se crea el struct para pasar el argumento a los hilos, el cual es principalmente la cola
+struct threadData {
+    queue<string> *lineas;
+};
 
-        // Comprobar si se alcanzó el final de la entrada estándar
-        if (numBytesLeidos == 0)
-            break;
 
-        // Incrementar el contador de líneas
-        int lineasLeidas = 0;
+// ---------------------------------------METODOS-------------------------------------------//
+void *printQueue(void *threadDataPointer){ // El parametro de esta funcion es un puntero generico, un puntero generico es un puntero que puede apuntar a cualquier tipo de dato
 
-        // Bloquear el acceso al archivo para escribir
-        mtx.lock();
-        ofstream salida(nombreArchivo, ios::binary | ios::app); // Abrir el archivo en modo binario y adjuntar
+    // Recibir correctamente el struct y desreferenciarlo
+    struct threadData *data = (struct threadData *)threadDataPointer;
+    // Inicializar una cola con la direccion de memoria de la cola usada
+    queue<string> *lineas = data->lineas;
 
-        // Escribir el contenido del buffer en el archivo, contando las líneas
-        for (int i = 0; i < numBytesLeidos; ++i) {
-            salida.put(buffer[i]);
-            if (buffer[i] == '\n') {
-                ++lineasTotales;
-                ++lineasLeidas;
-                if (lineasTotales % LINES_PER_FILE == 0) {
-                    salida.close();
-                    string nuevoNombreArchivo = nombreArchivo.substr(0, nombreArchivo.find_last_of('.')) + "_" + to_string(lineasTotales / LINES_PER_FILE) + ".txt";
-                    salida.open(nuevoNombreArchivo, ios::binary | ios::app);
-                }
-            }
-        }
+    //Lock
+    pthread_mutex_lock(&mtx);
 
-        salida.close(); // Cerrar el archivo
-        mtx.unlock();
+    if(!lineas->empty()) {
+        cout << lineas->front() << endl;
+        lineas->pop();
     }
+
+    //Unlock
+    pthread_mutex_unlock(&mtx);
+    
+    pthread_exit(NULL);
+
 }
 
+
+// -----------------------------------------MAIN--------------------------------------------//
 int main() {
-    string nombreArchivo = "Cola de texto/datos.txt"; // Nombre del archivo en el que se escribirán los datos
-    vector<thread> threads; // Vector para almacenar los hilos
 
-    cout << "Por favor, ingresa los datos. Presiona Ctrl+D (Linux/Mac) o Ctrl+Z (Windows) y Enter para finalizar." << endl;
+    // Definir cuantos hilos se van a usar, una constante o una variable que define cuántos hilos se van a crear
+    pthread_t threads[TOTAL_THREADS];
 
-    // Crear hilos para la lectura y escritura de datos
-    for (int i = 0; i < 1; ++i) { // Solo un hilo para mantener el control sobre el contador de líneas
-        threads.emplace_back(leerYGuardar, ref(nombreArchivo)); // Agregar un nuevo hilo al vector
+    // Inicialización de Mutex para evitar errores de sincronización
+    pthread_mutex_init(&mtx, NULL);
+
+    // Cola para almacenar las líneas leídas por entrada estandar
+    queue<string> lineasSTD;
+
+    // Declarar la linea donde se va a almacenar lo leido por entrada estandar
+    string linea;
+    int contador = 0;
+
+    cout << "\n\tIngrese el texto. Ctrl+D para finalizar.\n" << endl;
+    while (getline(cin, linea)) {
+
+        // Encolar la linea leida por entrada estandar
+        lineasSTD.push(linea);
+        // Aumentar el contador
+        contador++;
+
+        if(contador == 5){
+            
+            cout << "\nLimite de lineas alcanzado, imprimiendo...\n" << endl;
+            // Inicializar el struct con la direccion de memoria de la cola
+            threadData info;
+            // En este struct creado, asignarle el atributo "lineas" con la direccion de memoria de la cola
+            info.lineas = &lineasSTD;
+
+            for (int i = 0; i < TOTAL_THREADS; i++) { //Por cada iteración se usa un identificador de hilo
+            
+                if (pthread_create(&threads[i], NULL, printQueue, &info) != 0) { //Se esta enviando como argumento un struct que adentro tiene la direccion de memoria de la cola
+                    perror("Error creating thread\n");
+                    return 1;
+                }
+
+            }
+
+            //Esperar a que los hilos terminen la ejecución para cerrarlos y terminar el programa
+            for (int i = 0; i < TOTAL_THREADS; i++) {
+                pthread_join(threads[i], NULL);
+            }
+
+            //Reiniciar contador
+            contador = 0;
+        }
+
     }
-
+    
     // Esperar a que todos los hilos terminen
-    for (auto& t : threads) {
-        t.join();
-    }
+    // pthread_mutex_lock(&mtx);
+    // pthread_mutex_unlock(&mtx);
 
-    cout << "Los datos se han escrito en archivos con nombres distintos." << endl;
-
+    pthread_mutex_destroy(&mtx);
     return 0;
 }

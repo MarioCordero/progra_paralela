@@ -19,11 +19,12 @@ g. ¿Qué funciona y qué no funciona?
 
 <!--
 
-Lorem ipsum dolor sit amet,
-consectetur adipiscing elit.
-Pellentesque habitant morbi
-tristique senectus et netus
-et malesuada fames ac turpis
+LN1 Lorem ipsum dolor sit amet,
+LN2 consectetur adipiscing elit.
+LN3 Pellentesque habitant morbi
+LN4 tristique senectus et netus
+LN5 et malesuada fames ac turpis
+
 egestas. Vestibulum tortor quam,
 feugiat vitae, ultricies eget,
 tempor sit amet, ante. Donec eu
@@ -92,6 +93,6 @@ commodo a, sodales sit amet,
 nisi. Pellentesque fermentum
 dolor. Aliquam quam lectus,
 facilisis auctor, ultrices ut,
-elementum vulputate, nunc. 
+elementum vulputate, nunc.
 
 -->
