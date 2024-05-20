@@ -21,7 +21,7 @@ compile_ThreadSanitizer_clang:
 
 # EXECUTERS INSTANCES
 execute_general:
-	./executeme
+	./executeme < prueba.txt
 
 execute_valgrind:
 	valgrind --tool=helgrind ./executeme $(ARGS)

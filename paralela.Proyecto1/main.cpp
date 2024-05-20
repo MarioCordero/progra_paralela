@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
-#include <queue>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
+#include "channel.h"
+#include <pthread.h>
 
 using namespace std;
 
@@ -15,12 +17,10 @@ pthread_mutex_t mtx;
 // Variable de condición para notificar a los consumidores
 pthread_cond_t cond_var;
 
-// Cola para almacenar las líneas leídas por entrada estandar
-queue<string> lineasSTD;
-
 // Se crea el struct para pasar el argumento a los hilos, el cual es principalmente la cola
 struct threadData {
-    queue<string> *lineas;
+    //Ya no se usa la cola directamente, sino la clase Chanel (El canal)
+    Channel<string> *lineas;
 };
 
 
@@ -31,30 +31,16 @@ void *printQueue(void *threadDataPointer){ // El parametro de esta funcion es un
 
     // Recibir correctamente el struct y desreferenciarlo
     struct threadData *data = (struct threadData *)threadDataPointer;
-    // Inicializar una cola con la direccion de memoria de la cola usada
-    queue<string> *lineas = data->lineas;
+    //Definir un canal de stringsm ya no es una cola
+    Channel<string> *lineas = data->lineas;
 
 
     while (true) {
-        // Lock
-        pthread_mutex_lock(&mtx);
 
-        // Esperar hasta que haya datos en la cola
-        while (lineas->empty()) {
-            pthread_cond_wait(&cond_var, &mtx);
-        }
-
-        // Procesar una línea de la cola
-        if (!lineas->empty()) {
-            string line = lineas->front();
-            lineas->pop();
-            pthread_mutex_unlock(&mtx);
-            
-            // Procesar la línea fuera del bloqueo para permitir más concurrencia
-            cout << "Procesando línea: " << line << endl;
-        } else {
-            pthread_mutex_unlock(&mtx);
-        }
+        //Uso de "auto" porque en receiveChannel() devuelve un optional<T>
+        auto valorGenerico = lineas->receiveChannel();
+        string linea = *valorGenerico;
+        cout << "Procesando línea: " << linea << endl;
     }
 
     pthread_exit(NULL);
@@ -62,22 +48,11 @@ void *printQueue(void *threadDataPointer){ // El parametro de esta funcion es un
 }
 
 // Metodo productor
-void productor() {
-
+void productor(Channel<string> *canalStrings) {
     string linea;
     cerr << "\n\tIngrese el texto. Ctrl+D para finalizar.\n" << endl;
     while (getline(cin, linea)) {
-        // Lock
-        pthread_mutex_lock(&mtx);
-
-        // Encolar la línea leída por entrada estándar
-        lineasSTD.push(linea);
-
-        // Notificar a los consumidores que hay datos disponibles
-        pthread_cond_signal(&cond_var);
-
-        // Unlock
-        pthread_mutex_unlock(&mtx);
+        canalStrings->sendChannel(linea);
     }
 }
 
@@ -91,11 +66,14 @@ int main() {
     // Inicialización de Mutex para evitar errores de sincronización
     pthread_mutex_init(&mtx, NULL);
 
-    // Inicializar el struct con la direccion de memoria de la cola
-    threadData info;
+    // Inicializar el canal
+    Channel<string> canalStrings;
 
-    // En este struct creado, asignarle el atributo "lineas" con la direccion de memoria de la cola
-    info.lineas = &lineasSTD;
+    // Inicializar el struct
+    threadData info;
+    // Asignar el canal al struct para poder pasarlo a los hilos
+    info.lineas = &canalStrings;
+
 
     for (int i = 0; i < TOTAL_THREADS; i++) { //Por cada iteración se usa un identificador de hilo
 
@@ -106,11 +84,12 @@ int main() {
 
     }
 
-    // Se ejecuta el metodo productor
-    productor();
+    // Se ejecuta el metodo productor, con el canal para lo carguen con los strings
+    productor(&canalStrings);
 
     // Esperar a que los hilos terminen la ejecución para cerrarlos y terminar el programa
     for (int i = 0; i < TOTAL_THREADS; ++i) {
+        //Quitar este cancel
         pthread_cancel(threads[i]);
         pthread_join(threads[i], NULL);
     }

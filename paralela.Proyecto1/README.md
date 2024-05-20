@@ -1,98 +1,50 @@
-# PARALELA.Proyecto #1
+# Proyecto Programación Concurrente y Paralela: Conteo de Palabras
 
-<h2>Collaboradores</h2>
+## Miembros del equipo
+- Mario Cordero Aguilar C22306
+- Nathalie Alfaro Quesada B90221
 
-> Mario Cordero Aguilar C22306
-> 
-> Nathalie Alfaro Quesada B90221
->
-> a. Miembros del equipo 
-b. Partes elaboradas por cada miembro 
-c. Cómo compilar el proyecto 
-d. Cómo correr el proyecto 
-e. Diseño de su programa. Consideren usar diagramas mermaid dentro de su 
-documento markdown, ya que Github puede renderizarlo correctamente. 
-f. Problemas encontrados 
-g. ¿Qué funciona y qué no funciona? 
+## Partes elaboradas por cada miembro
+### Mario Cordero
+- Implementación de la lectura del documento y la división del trabajo entre threads.
 
-<!-- LINEAS DE PRUEBA -->
+### Nathalie Alfaro
+- Implementación del conteo de palabras y ordenamiento alfabético.
 
-<!--
+## Cómo usar
+- Para ejecutar el programa, debe ser en una distribución Linux y debe asegurarse tener g++ y make instalado.
+- Deberá abrir una terminal en esta carpeta y escribir "make". El archivo Makefile se encargaŕa del resto.
 
-LN1 Lorem ipsum dolor sit amet,
-LN2 consectetur adipiscing elit.
-LN3 Pellentesque habitant morbi
-LN4 tristique senectus et netus
-LN5 et malesuada fames ac turpis
+```bash
+make
+```
 
-egestas. Vestibulum tortor quam,
-feugiat vitae, ultricies eget,
-tempor sit amet, ante. Donec eu
-libero sit amet quam egestas
-semper. Aenean ultricies mi vitae
-est. Mauris placerat eleifend leo.
-Quisque sit amet est et sapien
-ullamcorper pharetra.
-Vestibulum erat wisi, condimentum
-sed, commodo vitae, ornare sit
-amet, wisi. Aenean fermentum,
-elit eget tincidunt condimentum,
-eros ipsum rutrum orci, sagittis
-tempus lacus enim ac dui.
-Donec non enim in turpis pulvinar
-facilisis. Ut felis. Praesent
-dapibus, neque id cursus faucibus,
-tortor neque egestas augue, eu
-vulputate magna eros eu erat.
-Aliquam erat volutpat. Nam dui
-mi, tincidunt quis, accumsan
-porttitor, facilisis luctus,
-metus. Phasellus ultrices nulla
-quis nibh. Quisque a lectus.
-Donec consectetuer ligula
-vulputate sem tristique cursus.
-Nam nulla quam, gravida non,
-commodo a, sodales sit amet,
-nisi. Pellentesque fermentum
-dolor. Aliquam quam lectus,
-facilisis auctor, ultrices ut,
-elementum vulputate, nunc.
-Lorem ipsum dolor sit amet,
-consectetur adipiscing elit.
-Pellentesque habitant morbi
-tristique senectus et netus
-et malesuada fames ac turpis
-egestas. Vestibulum tortor quam,
-feugiat vitae, ultricies eget,
-tempor sit amet, ante. Donec eu
-libero sit amet quam egestas
-semper. Aenean ultricies mi vitae
-est. Mauris placerat eleifend leo.
-Quisque sit amet est et sapien
-ullamcorper pharetra.
-Vestibulum erat wisi, condimentum
-sed, commodo vitae, ornare sit
-amet, wisi. Aenean fermentum,
-elit eget tincidunt condimentum,
-eros ipsum rutrum orci, sagittis
-tempus lacus enim ac dui.
-Donec non enim in turpis pulvinar
-facilisis. Ut felis. Praesent
-dapibus, neque id cursus faucibus,
-tortor neque egestas augue, eu
-vulputate magna eros eu erat.
-Aliquam erat volutpat. Nam dui
-mi, tincidunt quis, accumsan
-porttitor, facilisis luctus,
-metus. Phasellus ultrices nulla
-quis nibh. Quisque a lectus.
-Donec consectetuer ligula
-vulputate sem tristique cursus.
-Nam nulla quam, gravida non,
-commodo a, sodales sit amet,
-nisi. Pellentesque fermentum
-dolor. Aliquam quam lectus,
-facilisis auctor, ultrices ut,
-elementum vulputate, nunc.
+## Diseño de su programa
+El programa se divide en varias etapas:
+1. Lectura del documento desde la entrada estándar.
+2. División del trabajo entre threads para procesar el documento.
+3. Conteo de palabras y ordenamiento alfabético.
+4. Spilling a disco para gestionar la memoria.
+5. Presentación de los resultados.
 
--->
+## Problemas encontrados
+Durante el desarrollo del proyecto, nos encontramos con los siguientes problemas:
+- Gestión eficiente de la memoria al procesar archivos grandes.
+- Coordinación entre threads para evitar condiciones de carrera.
+- Cálculo del tamaño de las variables usadas en el programa
+- Escritura en disco una vez sobrepasado el límite de memoria de las variables usadas en el programa.
+
+## Fechas de evaluación
+- [x] Lunes 6 de mayo: Diseño del proyecto.
+- [x] 13 y 20 de mayo: Avances del progreso del proyecto.
+- [ ] 26 de mayo a medianoche: Entrega del proyecto.
+- [ ] 27 de mayo: Presentación final del proyecto.
+
+## Evaluación
+Se evaluarán los siguientes aspectos:
+- Calidad del código: 25%
+- Eficiencia y escalabilidad del programa: 25%
+- Spilling: 10%
+- Correctitud: 10%
+- No hay fugas de memoria: 10%
+- Documentación: 20%
