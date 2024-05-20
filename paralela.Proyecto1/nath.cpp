@@ -5,6 +5,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <pthread.h>
+#include <sstream>
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void *printQueue(void *threadDataPointer){ // El parametro de esta funcion es un
             pthread_mutex_unlock(&mtx);
             
             // Procesar la línea fuera del bloqueo para permitir más concurrencia
-            cout << "Procesando línea: " << line << endl;
+            cout << "\nProcesando línea: " << line << endl;
 
             // Separar las palabras en la línea y actualizar el contador en la tabla hash local
             istringstream iss(line);
