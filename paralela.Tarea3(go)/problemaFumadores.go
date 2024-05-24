@@ -71,7 +71,7 @@ func main() {
 
 	// Inicializar los canales
 	for i := range ingredientChannels {
-		ingredientChannels[i] = make(chan struct{})
+		ingredientChannels[i] = make(chan struct{}, 1) // Hacer los canales con buffer de tamaño 1
 	}
 
 	// Añadir fumadores al WaitGroup
