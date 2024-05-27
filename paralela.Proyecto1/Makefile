@@ -8,7 +8,7 @@ ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
 # COMPILERS INSTANCES pthread
 compile_general:
-	g++ -o executeme nath.cpp
+	g++ -o executeme main.cpp
 
 compile_valgrind:
 	gcc -pthread -g -o executeme calcPi_pthread04.c -lm
