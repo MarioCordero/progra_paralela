@@ -7,9 +7,11 @@
 ## Partes elaboradas por cada miembro
 ### Mario Cordero
 - Implementación de la lectura del documento y la división del trabajo entre threads.
+- Implementación del canal.
 
 ### Nathalie Alfaro
-- Implementación del conteo de palabras y ordenamiento alfabético.
+- Implementación del conteo de palabras por medio de un hashtable.
+- Ordenamiento alfabético de las palabras mediante el merge sort.
 
 ## Cómo usar
 - Para ejecutar el programa, debe ser en una distribución Linux y debe asegurarse tener g++ y make instalado.
@@ -38,7 +40,7 @@ Durante el desarrollo del proyecto, nos encontramos con los siguientes problemas
 - [x] Lunes 6 de mayo: Diseño del proyecto.
 - [x] 13 y 20 de mayo: Avances del progreso del proyecto.
 - [x] 26 de mayo a medianoche: Entrega del proyecto.
-- [ ] 27 de mayo: Presentación final del proyecto.
+- [x] 27 de mayo: Presentación final del proyecto.
 
 ## Evaluación
 Se evaluarán los siguientes aspectos:

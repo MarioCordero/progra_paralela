@@ -40,22 +40,33 @@ class Channel {
             //INVESTIGAR
             std::unique_lock<std::mutex> lock(mtx);
             cond_var.wait(lock, [this] { return !colaGenerica.empty(); });
+            //Si el canal está cerrado y la cola está vacía, devolver un optional vacío
+            if (closed && colaGenerica.empty()) {
+                return std::nullopt;
+            }
             T valorGenerico = colaGenerica.front();
             colaGenerica.pop();
             return valorGenerico;
 
         }
 
-        // bool try_receive(T& value) {
-        //     std::lock_guard<std::mutex> lock(mtx);
-        //     if (queue.empty()) {
-        //         return false;
-        //     }
+        // Método para verificar si la cola está vacía
+        bool isEmpty() {
+            std::lock_guard<std::mutex> lock(mtx);
+            return colaGenerica.empty();
+        }
 
-        //     value = std::move(queue.front());
-        //     queue.pop();
-        //     return true;
-        // }
+        bool isClosed() {
+            std::lock_guard<std::mutex> lock(mtx);
+            return closed;
+        }
+
+        // Método para cerrar el canal
+        void close() {
+            std::lock_guard<std::mutex> lock(mtx);
+            closed = true;
+            cond_var.notify_all();
+        }
 
     private:
         //Mutex
@@ -64,6 +75,8 @@ class Channel {
         std::condition_variable cond_var;
         //La cola con cualquier tipo de dato
         std::queue<T> colaGenerica;
+        //Indica si el canal está cerrado
+        bool closed = false;
 };
 
 
