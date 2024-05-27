@@ -5,6 +5,10 @@ valgrind: compile_valgrind execute_valgrind
 ThreadSanitizer: compile_ThreadSanitizer execute_general
 ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> main
 # COMPILERS INSTANCES pthread
 compile_general:
 	g++ -o executeme main.cpp
@@ -21,7 +25,11 @@ compile_ThreadSanitizer_clang:
 
 # EXECUTERS INSTANCES
 execute_general:
+<<<<<<< HEAD
+	./executeme
+=======
 	./executeme < prueba.txt
+>>>>>>> main
 
 execute_valgrind:
 	valgrind --tool=helgrind ./executeme $(ARGS)
