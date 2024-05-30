@@ -10,7 +10,7 @@ compile_general:
 	g++ -o executeme main.cpp
 
 compile_valgrind:
-	gcc -pthread -g -o executeme calcPi_pthread04.c -lm
+	g++ -pthread -g -o executeme main.cpp
 
 compile_ThreadSanitizer:
 	gcc -pthread -fsanitize=thread -o executeme calcPi_pthread03.c -lm
@@ -24,4 +24,5 @@ execute_general:
 	./executeme < prueba.txt
 
 execute_valgrind:
-	valgrind --tool=helgrind ./executeme $(ARGS)
+	valgrind --tool=helgrind ./executeme 
+	valgrind --leak-check=full --show-leak-kinds=all ./executeme < prueba.txt
