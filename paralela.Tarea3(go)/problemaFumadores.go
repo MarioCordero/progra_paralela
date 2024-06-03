@@ -14,8 +14,6 @@ const maxIterations = 10 // Número máximo de iteraciones antes de finalizar
 // Estructura para representar los ingredientes
 type Ingrediente int
 
-var globalCounter = 0
-
 // Declaración de constantes
 const (
 	tabaco   Ingrediente = 0
@@ -39,25 +37,11 @@ var agentChannel = make(chan struct{}, 1) // Hacer el canal con buffer
 // WaitGroup para esperar a que todos los fumadores terminen
 var wg sync.WaitGroup
 
-// Mutex para la sincronización
-var mutex sync.Mutex
-
-// Estado de los ingredientes en la mesa, empieza con todo en false, diciendo que no hay ningún ingrediente en la mesa
-var onTable = [numSmokers]bool{false, false, false}
-
 // Función del agente
 func agent() {
 	for {
 		<-agentChannel
 		fmt.Println("\nAgente recibió señal para poner ingredientes en la mesa.\n")
-
-		mutex.Lock()
-		if globalCounter >= maxIterations {
-			// Señalar el fin del proceso
-			mutex.Unlock()
-			fmt.Println("Agente ha alcanzado el máximo de iteraciones, finalizando.")
-			return
-		}
 
 		ingredient1 := rand.Intn(numSmokers)
 		ingredient2 := (ingredient1 + rand.Intn(numSmokers-1) + 1) % numSmokers
@@ -66,82 +50,84 @@ func agent() {
 			ingredient2 = (ingredient2 + 1) % numSmokers
 		}
 
-		onTable[ingredient1] = true
-		onTable[ingredient2] = true
-
 		fmt.Printf("El agente pone [%s] y [%s] en la mesa.\n", ingredientNames[ingredient1], ingredientNames[ingredient2])
 
 		// Aqui enviamos las señales a los canales
 		ingredientChannels[ingredient1] <- struct{}{}
 		ingredientChannels[ingredient2] <- struct{}{}
-		mutex.Unlock()
+
+		// Ya terminó el agente
+		wg.Done()
 	}
 }
 
 // Función del fumador
-func smoker(id int, has Ingrediente) {
+func smoker(has Ingrediente) {
 	// 		cuando se ejecuta defer wg.Done(), se está indicando que, cuando una goroutine de fumador finalice su trabajo y 
 	// esté a punto de retornar, se debe informar al WaitGroup que esa goroutine ha terminado. Esto decrementa el contador 
 	// interno del WaitGroup.
-	defer wg.Done()
 	for {
-		fmt.Printf("Fumador con [%s] esperando ingredientes.\n", ingredientNames[has])
-		// Aqui esperamos, recibimos las señales de los canales
-		<-ingredientChannels[(has+1)%numSmokers]
-		<-ingredientChannels[(has+2)%numSmokers]
-		fmt.Printf("Fumador con [%s] recibió señal para verificar la mesa.\n", ingredientNames[has])
 
-		mutex.Lock()
-		// Este if verifica sí están los ingretiendes en la mesa, ambos ingredientes deben ser "true" para que el fumador pueda proceder a fumar.
-		if onTable[(has+1)%numSmokers] && onTable[(has+2)%numSmokers] {
-			if globalCounter >= maxIterations {
-				// Señalar el fin del proceso
-				mutex.Unlock()
-				fmt.Printf("Fumador con [%s] ha alcanzado el máximo de iteraciones, finalizando.\n", ingredientNames[has])
-				return
-			}
+		select{
+			// Caso de que me llegue una señal
+			case <-ingredientChannels[(has+1)%numSmokers]:
 
-			// Iterador para verificar las vueltas que lleva
-			fmt.Printf("\nIterador = %d\n", globalCounter)
-			globalCounter++
-			fmt.Printf("Fumador con [%s] está fumando, dejenlo.\n", ingredientNames[has])
+				select{
+					// Caso de que me llegue la otra señal
+					case <-ingredientChannels[(has+2)%numSmokers]:
+						// tengo 2 ingredientes, proceda a fumar
+						fmt.Printf("Fumador con [%s] está fumando, dejenlo.\n", ingredientNames[has])
+						time.Sleep(time.Second) 
 
-			// Quita los ingredientes de la mesa
-			onTable[(has+1)%numSmokers] = false
-			onTable[(has+2)%numSmokers] = false
+						// Indicarle al agente que puede poner otra vez los elementos en la mesa
+						agentChannel <- struct{}{}
+					// Fin del caso
 
-			// Señalar al agente que termine y ponga nuevos ingredientes
-			agentChannel <- struct{}{}
+					// Caso default
+					default:
+						ingredientChannels[(has+1)%numSmokers] <- struct {}{}
+					// Fin del caso
+				}
+
+			// Fin del caso
+
+			// Caso default
+			default:
+				//No haga nada
+			// Fin del caso
 		}
-		mutex.Unlock()
 	}
 }
 
 func main() {
-	fmt.Printf("\nEmpieza el codigo...\n\n")
 	// Inicializador de rand, para los rand usado en la función de agent
 	rand.Seed(time.Now().UnixNano())
 
-	//		El propósito de este código es inicializar cada canal en el array ingredientChannels con un canal buffered 
-	// de tamaño 1. Esto permite a cada canal ingredientChannels[i] almacenar una señal (un valor de tipo struct{}) 
-	// antes de que un receptor la reciba, lo que es útil para sincronización en concurrencia.
+	// Crear los canales de cada ingrediente
 	for i := range ingredientChannels {
 		ingredientChannels[i] = make(chan struct{}, 1)
 	}
 
-	//		Cuando se usa wg.Add(numSmokers), se está incrementando el contador interno del WaitGroup (wg) en la cantidad 
-	// de fumadores que hay en el programa. Esto indica que hay varias goroutines que el programa debe esperar a que 
-	// terminen antes de continuar.
-	wg.Add(numSmokers)
+	// Añadir al wg un entero que indica que hay 1 elemento ejecutandose
+	wg.Add(1)
 
-	for i := 0; i < numSmokers; i++ {
-		go smoker(i, Ingrediente(i))
-	}
-
+	// Enviando la señal al canal del agente, que puede poner los ingredientes en la mesa
+	agentChannel <- struct{}{}
+	// Ejecutar el agente
 	go agent()
 
-	agentChannel <- struct{}{}
-
+	// Esperar al done que reste el 1 de wg, para verificar que el agente ponga todo sobre la mesa
 	wg.Wait()
-	fmt.Println("Proceso completado")
+	
+	for i := 0; i < numSmokers; i++ {
+		// Añadir al wg un entero que indica que hay 1 elemento ejecutandose
+		wg.Add(1)
+		// Ejecutar el fumador
+		go smoker(Ingrediente(i))
+	}
+
+	// Esperar al done que reste el 1 de wg para terminar el programa
+	wg.Wait()
+
+	fmt.Println("\n\nProceso completado")
 }
