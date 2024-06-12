@@ -33,11 +33,14 @@ compile_ThreadSanitizer_clang:
 	clang -pthread -fsanitize=thread -o $(EXECUTABLE) $(FILES)
 
 clean:
+	@echo "\n"
 	rm -f $(EXECUTABLE)
 
 # EXECUTERS INSTANCES
 execute_general:
+	@echo "\n"
 	./$(EXECUTABLE)
+	@echo "\n"
 
 execute_valgrind:
 	valgrind --tool=helgrind ./$(EXECUTABLE)
