@@ -14,7 +14,7 @@ FILES = $(ARGS)
 EXECUTABLE = executeme
 
 # COMPILERS INSTANCES pthread
-compile_general_cpp:
+compile_general:
 	gcc -o $(EXECUTABLE) -msse4.1 $(FILES)
 
 compile_general_cuda:
