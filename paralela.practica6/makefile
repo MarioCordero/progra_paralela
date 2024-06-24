@@ -1,24 +1,31 @@
 # Verificar si ARGS está definido
-ifndef ARGS
-$(error No se proporcionaron argumentos. Ejecute con make ARGS="nombre del archivo")
-endif
+# ifndef ARGS
+# $(error No se proporcionaron argumentos. Ejecute con make ARGS="nombre del archivo")
+# endif
 
 # NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
-all: compile_general execute_general clean
+all: errMSG
+c++: compile_c++ execute_general clean
+CUDA: compile_CUDA execute_general clean
 
 
 # Variables
-OBJDUMP = objdump -d
-INPUTFILE = prueba.txt
-FILES = $(ARGS)
+C++EXAMPLE = ejemplo1.cpp
+CUDAEXAMPLE = ejemplo2.cu
+
 EXECUTABLE = executeme
 
-# COMPILERS INSTANCES pthread
-compile_general:
-	gcc -o $(EXECUTABLE) -msse4.1 $(FILES)
+errMSG:
+	@echo "\n"
+	$(error Asi no se usa esto, revise la documentacion porfa.")
+	@echo "\n"
 
-compile_general_cuda:
-	nvcc add.cu -o add_cuda
+# COMPILERS INSTANCES pthread
+compile_c++:
+	g++ -o $(EXECUTABLE) $(C++EXAMPLE)
+
+compile_CUDA:
+	nvcc -o $(EXECUTABLE) $(CUDAEXAMPLE)
 
 clean:
 	@echo "\n"

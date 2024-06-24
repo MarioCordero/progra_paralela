@@ -119,7 +119,7 @@ int main (int argc, char *argv[]) {
  
     stop = clock(); 
  
-    printf("GPU pi calculated in %f s.\n", (stop-start)/(float)CLOCKS_PER_SEC); 
+    printf("\nGPU pi calculated in %f s.\n", (stop-start)/(float)CLOCKS_PER_SEC); 
  
     start = clock(); 
 
@@ -127,9 +127,9 @@ int main (int argc, char *argv[]) {
 
     stop = clock();
 
-    printf("CPU pi calculated in %f s.\n", (stop-start)/(float)CLOCKS_PER_SEC); 
+    printf("\nCPU pi calculated in %f s.\n", (stop-start)/(float)CLOCKS_PER_SEC); 
  
-    printf("CUDA estimate of PI = %f [error of %f]\n", pi_gpu, pi_gpu - PI); 
+    printf("\nCUDA estimate of PI = %f [error of %f]\n", pi_gpu, pi_gpu - PI); 
 
     printf("CPU estimate of PI = %f [error of %f]\n", pi_cpu, pi_cpu - PI); 
   
