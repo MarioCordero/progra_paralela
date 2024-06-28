@@ -4,19 +4,19 @@
 GOFILES = problemaFumadores.go
 BINARY = problemaFumadores
 
-# Reglas
-.PHONY: all clean run
-
 all: build run clean
 
 build:
 	@echo "Compilando el programa..."
+	@echo "\n"
 	go build -o $(BINARY) $(GOFILES)
 
 run: build
 	@echo "Ejecutando el programa..."
+	@echo "\n"
 	./$(BINARY)
 
 clean:
+	@echo "\n"
 	@echo "Limpiando archivos compilados..."
 	rm -f $(BINARY)

@@ -23,7 +23,7 @@ const (
 var ingredientNames = []string{"Tobacco", "Paper", "Matches"}
 
 // Canal para cada ingrediente
-var ingredientChannels [numSmokers]chan struct{}
+var ingredientChannels [3]chan struct{}
 
 // Canal para el agente
 var agentChannel = make(chan struct{})
@@ -51,18 +51,32 @@ func agent() {
 
 // Función del fumador
 func smoker(id int, has Ingredient) {
+	// Cada que se ejecute el smoker() se decremente la variable de espera
 	defer wg.Done()
 	for {
-		// Esperar a que estén los ingredientes que necesita
-		<-ingredientChannels[(has+1)%numSmokers]
-		<-ingredientChannels[(has+2)%numSmokers]
+		// Un select para administrar cada el primer ingrediente que tengamos o no tengamos
+		select {
+			// Tengo un ingrediente
+			case <-ingredientChannels[(has+1)%3]:
+				// Un segundo select para administrar el segundo ingredientes que tengamos o no tengamos
+				select {
 
-		// Fumar (simulación con sleep)
-		fmt.Printf("Smoker with %s is smoking.\n", ingredientNames[has])
-		time.Sleep(time.Second)
+					case <-ingredientChannels[(has+2)%3]:
+						// El fumador con x ingrediente agarra los 2 ingredientes disponibles y fuma
+						fmt.Printf("\nSmoker with %s is smoking.\n", ingredientNames[has])
 
-		// Señalar al agente que termine y ponga nuevos ingredientes
-		agentChannel <- struct{}{}
+						// El segundo de pausa que simula el fumado
+						time.Sleep(time.Second) 
+
+						// Avisar al agente que se terminó de fumar
+						agentChannel <- struct{}{}
+
+					// Caso default, si no tengo ese segundo ingrediente, dejo mi ingrediente en la mesa
+					default:
+						// Envío la señal al canal de que está disponible porque no pude fumar
+						ingredientChannels[(has+1)%3] <- struct{}{}
+				}
+		}
 	}
 }
 
@@ -71,22 +85,28 @@ func main() {
 
 	// Inicializar los canales
 	for i := range ingredientChannels {
-		ingredientChannels[i] = make(chan struct{}, 1) // Hacer los canales con buffer de tamaño 1
+		// Hacer los canales con buffer de tamaño 1
+		ingredientChannels[i] = make(chan struct{}, 1)
 	}
 
-	// Añadir fumadores al WaitGroup
-	wg.Add(numSmokers)
-
-	// Iniciar las goroutines de los fumadores
-	for i := 0; i < numSmokers; i++ {
-		go smoker(i, Ingredient(i))
-	}
-
-	// Iniciar la goroutine del agente
+	// La cantidad de fumadores
+	wg.Add(3)
+	
+	// Poner a correr al agente
 	go agent()
 
 	// Iniciar el proceso con una señal al agente
 	agentChannel <- struct{}{}
+
+	// Iniciar las goroutines de los fumadores
+	for i := 0; i < numSmokers; i++ {
+		
+		// Añadir una espera cada que se da un ingrediente
+		// Los fumadores van a estar esperando la señal del agente
+		// Se le da a cada fumador un
+		go smoker(i, Ingredient(i))
+
+	}
 
 	// Esperar a que los fumadores terminen (nunca sucede en esta simulación)
 	wg.Wait()
