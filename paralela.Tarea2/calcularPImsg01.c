@@ -30,15 +30,6 @@ void *throw_darts(void *arg){
 
 int main(int argc, char *argv[]){
 
-    if (argc != 3){
-
-        printf("\n");
-		printf("%s \n Error, esto se usa: make ARGS= \" <total_points> <total_threads> \"\n", argv[0]);
-		printf("\n");
-        return 1;
-
-    }
-
     total_points = atoi(argv[1]);
     total_threads = atoi(argv[2]);
 
@@ -61,7 +52,7 @@ int main(int argc, char *argv[]){
 
     double pi = 4.0 * points_inside_circle / total_points;
 
-    printf("Valor de pi: %f\n", pi);
+    printf("\nValor de pi: %f\n", pi);
 
     return 0;
 }
