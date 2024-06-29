@@ -103,7 +103,6 @@ int main(int argc, char *argv[]){
     }
 
     double pi = 4.0 * points_inside_circle / total_points;
-    printf("\n\nValor de pi: %f\n\n", pi);
 
     // RELOJ
     // Fuente: https://www.youtube.com/watch?v=1KQqpiXxvWQ
@@ -111,7 +110,10 @@ int main(int argc, char *argv[]){
     clock_gettime(CLOCK_MONOTONIC, &after);
     long secs = after.tv_sec-before.tv_sec;
     uint64_t nanosecs = ((after.tv_sec*1000000000) + after.tv_nsec)-((before.tv_sec*1000000000) + before.tv_nsec);
-    printf("%ld sec, %ld nanosecs. \n\n", secs, nanosecs);
+    printf("\n\n\t---------------TIEMPO DE EJECUCION------------------");
+    printf("\n\t%ld sec, %ld nanosecs. \n", secs, nanosecs);
+
+    printf("\n\tValor de pi: %f\n\n", pi);
 
     return 0;
 }

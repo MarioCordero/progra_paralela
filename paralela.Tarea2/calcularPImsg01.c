@@ -47,12 +47,25 @@ int main(int argc, char *argv[]){
 
     }
 
+    // RELOJ
+    struct timespec before;
+    clock_gettime(CLOCK_MONOTONIC, &before);
+
     // Acá deberán introducir el paralelismo
     throw_darts((void *)1);
 
     double pi = 4.0 * points_inside_circle / total_points;
 
-    printf("\nValor de pi: %f\n", pi);
+    // RELOJ
+    // Fuente: https://www.youtube.com/watch?v=1KQqpiXxvWQ
+    struct timespec after;
+    clock_gettime(CLOCK_MONOTONIC, &after);
+    long secs = after.tv_sec-before.tv_sec;
+    uint64_t nanosecs = ((after.tv_sec*1000000000) + after.tv_nsec)-((before.tv_sec*1000000000) + before.tv_nsec);
+    printf("\n\n\t---------------TIEMPO DE EJECUCION------------------");
+    printf("\n\t%ld sec, %ld nanosecs. \n", secs, nanosecs);
+
+    printf("\n\tValor de pi: %f\n", pi);
 
     return 0;
 }

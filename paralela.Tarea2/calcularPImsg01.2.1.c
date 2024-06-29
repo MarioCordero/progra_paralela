@@ -3,157 +3,134 @@
 #include <pthread.h>
 #include <math.h>
 #include <stdint.h>
-
-//Includes
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <time.h>
 
 #define MAX_THREADS 5000
-pthread_mutex_t mutex;
+
+pthread_mutex_t queue_mutex;
+pthread_cond_t queue_cond;
 
 int total_threads;
 int points_inside_circle = 0;
 int total_points;
 
-// CREAR UN NODO PARA ENCOLAR/DESENCOLAR CON EL PASO DE MENSAJES
-struct msg_buffer {
-
+// Estructura de nodo para la cola
+struct node {
     int points;
+    struct node *next;
+};
 
-} message;
+// Cola para mensajes
+struct queue {
+    struct node *front;
+    struct node *rear;
+} message_queue;
 
-void *throw_darts(void *arg){
+// Inicializar la cola
+void init_queue(struct queue *q) {
+    q->front = q->rear = NULL;
+}
+
+// Función para insertar en la cola (push)
+void push(struct queue *q, int points) {
+    struct node *temp = (struct node *)malloc(sizeof(struct node));
+    temp->points = points;
+    temp->next = NULL;
+    pthread_mutex_lock(&queue_mutex);
+    if (q->rear == NULL) {
+        q->front = q->rear = temp;
+    } else {
+        q->rear->next = temp;
+        q->rear = temp;
+    }
+    pthread_cond_signal(&queue_cond);
+    pthread_mutex_unlock(&queue_mutex);
+}
+
+// Función para eliminar de la cola (pop)
+int pop(struct queue *q) {
+    pthread_mutex_lock(&queue_mutex);
+    while (q->front == NULL) {
+        pthread_cond_wait(&queue_cond, &queue_mutex);
+    }
+    struct node *temp = q->front;
+    int points = temp->points;
+    q->front = q->front->next;
+    if (q->front == NULL) {
+        q->rear = NULL;
+    }
+    free(temp);
+    pthread_mutex_unlock(&queue_mutex);
+    return points;
+}
+
+void *throw_darts(void *arg) {
     int local_points = 0;
-
-    // INICIAMOS LA KEY DE LA COLA Y EL MSG ID
-    key_t key;
-    int msgid;
-
-    // GENERAMOS UNA CLAVE ÚNICA PARA LA COLA
-    key = ftok("queuefile", 65);
-
-    // CONECTAMOS A LA COLA DE MENSAJES CREADA Y OBTENEMOS SU ID
-    msgid = msgget(key, 0666 | IPC_CREAT);
-
     int childID = (uintptr_t)arg;
     int points_per_thread = total_points / total_threads;
     unsigned int seed = time(NULL) * (childID + 1);
 
-    for (int i = 0; i < points_per_thread; i++){
-
+    for (int i = 0; i < points_per_thread; i++) {
         double x = (double)rand_r(&seed) / RAND_MAX;
         double y = (double)rand_r(&seed) / RAND_MAX;
-        if (sqrt(x * x + y * y) <= 1){
-
+        if (sqrt(x * x + y * y) <= 1) {
             local_points++;
-
         }
     }
 
-    // CREAR EL STRUCT PARA ALMACENAR LOS DATOS
-    struct msg_buffer msg;
-
-    // CREAMOS EL MENSAJE CON LOS PUNTOS QUE GENERA CADA HILO
-    msg.points = local_points;
-
-    // BLOQUEAR EL MUTEX
-    pthread_mutex_lock(&mutex);
-
-        // ENVIAR EL NODO, MENSAJE
-        msgsnd(msgid, &msg, sizeof(message), 0);
-
-        // MOSTRAR EL PUNTO ENVIADO
-        printf("\nMensaje enviado: %i", msg.points);
-        
-    // DESBLOQUEAR EL MUTEX
-    pthread_mutex_unlock(&mutex);
-
+    // Enviar puntos al hilo principal
+    push(&message_queue, local_points);
     return NULL;
 }
 
+int main(int argc, char *argv[]) {
+    
+    total_points = atoi(argv[1]);
+    total_threads = atoi(argv[2]);
 
+    if (total_threads > MAX_THREADS) {
+        printf("El número de hilos no puede ser mayor a %d\n", MAX_THREADS);
+        return 1;
+    }
 
-int main(int argc, char *argv[]){
+    if (total_points % total_threads != 0) {
+        printf("El número de puntos debe ser divisible entre el número de hilos\n");
+        return 1;
+    }
 
     // RELOJ
     struct timespec before;
     clock_gettime(CLOCK_MONOTONIC, &before);
 
-    // DECLARA ARRAY DE INDENTIFICADORES DE HILO
+    // Inicializar mutex y condición
+    pthread_mutex_init(&queue_mutex, NULL);
+    pthread_cond_init(&queue_cond, NULL);
+
+    // Inicializar cola
+    init_queue(&message_queue);
+
     pthread_t threads[MAX_THREADS];
 
-    if (argc != 3){
-
-        printf("\n");
-		printf("%s \n Error, esto se usa: make ARGS= \" <total_points> <total_threads> \"\n", argv[0]);
-		printf("\n");
-        return 1;
-
-    }
-
-    total_points = atoi(argv[1]);
-    total_threads = atoi(argv[2]);
-
-    if (total_threads > MAX_THREADS){
-
-        printf("El número de hilos no puede ser mayor a %d\n", MAX_THREADS);
-        return 1;
-
-    }
-
-    if (total_points % total_threads != 0){
-
-        printf("El número de puntos debe ser divisible entre el número de hilos\n");
-        return 1;
-
-    }
-
-    // INICIAMOS LA KEY DE LA COLA Y EL MSG ID
-    key_t key;
-    int msgid;
-
-    // GENERAMOS LA CLAVE ÚNICA PARA LA COLA
-    key = ftok("queuefile", 65);
-
-    // CREAMOS LA COLA Y OBTENEMOS SU ID
-    msgid = msgget(key, 0666 | IPC_CREAT);
-
-    //Inicialización de Mutex para evitar errores de sincronización
-    pthread_mutex_init(&mutex, NULL);
-
-    // IMPLEMENTACIÓN Y CREACIÓN DE LOS HILOS
-    for (int i = 0; i < total_threads; i++) { // POR CADA ITERACIÓN SE USA UN ID DE HILO
-
-        if (pthread_create(&threads[i], NULL, throw_darts, NULL) != 0) {
+    // Implementación y creación de los hilos
+    for (int i = 0; i < total_threads; i++) {
+        if (pthread_create(&threads[i], NULL, throw_darts, (void *)(uintptr_t)i) != 0) {
             perror("Error creating thread\n");
             return 1;
         }
-
     }
 
-    // ESPERAR A QUE LOS HILOS TERMINEN LA EJECUCIÓN PARA QUE NO HAYA PROBLEMAS
+    // Esperar a que los hilos terminen la ejecución para que no haya problemas
     for (int i = 0; i < total_threads; i++) {
         pthread_join(threads[i], NULL);
     }
 
     points_inside_circle = 0;
 
-    // OBTENER TODOS LOS MENSAJES
+    // Obtener todos los mensajes
     for (int i = 0; i < total_threads; i++) {
-
-        // RECIBIR EL MENSAJE
-        msgrcv(msgid, &message, sizeof(message), 0, 0);
-
-        // SUMA EL CONTADOR DE PUNTOS EN TOTAL
-        points_inside_circle += message.points;
-
+        points_inside_circle += pop(&message_queue);
     }
-
-
     double pi = 4.0 * points_inside_circle / total_points;
-
-    printf("\n\nValor de pi: %f\n\n", pi);
 
     // RELOJ
     // Fuente: https://www.youtube.com/watch?v=1KQqpiXxvWQ
@@ -161,96 +138,14 @@ int main(int argc, char *argv[]){
     clock_gettime(CLOCK_MONOTONIC, &after);
     long secs = after.tv_sec-before.tv_sec;
     uint64_t nanosecs = ((after.tv_sec*1000000000) + after.tv_nsec)-((before.tv_sec*1000000000) + before.tv_nsec);
-    printf("%ld sec, %ld nanosecs. \n\n", secs, nanosecs);
+    printf("\n\n\t---------------TIEMPO DE EJECUCION------------------");
+    printf("\n\t%ld sec, %ld nanosecs. \n", secs, nanosecs);
 
-    // ELIMINAMOS LA COLA
-    msgctl(msgid, IPC_RMID, NULL);
+    printf("\n\tValor de pi: %f\n\n", pi);
 
-    //Destruir el mutex
-    pthread_mutex_destroy(&mutex);
+    // Destruir el mutex y la condición
+    pthread_mutex_destroy(&queue_mutex);
+    pthread_cond_destroy(&queue_cond);
 
     return 0;
 }
-
-// // -----------------------------------------------------IGNORAR POR FAVOR SOY UN IDIOTA-------------------------------------------------------//
-// // CREAR UN NODO PARA ENCOLAR/DESENCOLAR
-// typedef struct Node {
-
-//     int data; // RESULTADO
-
-//     struct Node* next; // PUNTERO AL SIGUIENTE NODO
-
-// } Node;
-
-// // -------------------------------------------------------------------------------------------------------------------------------------//
-// // -----------------------------------------------------IMPLEMENTACIÓN DE LA COLA-------------------------------------------------------//
-// // -------------------------------------------------------------------------------------------------------------------------------------//
-
-// // CREAR LA ESTRUCTURA DE LA COLA
-// typedef struct {
-
-//     Node* first; // CABEZA DE LA COLA
-
-//     Node* last; // COLA DE LA COLA xd
-
-//     // pthread_mutex_t mutex;
-
-// } Queue;
-
-// // INICIALIZAR COLA
-// void initializeQueue(Queue* q) {
-
-//     // INICIALIZAR COLA, TODO EN NULO
-//     q->first = NULL;
-//     q->last = NULL;
-//     // pthread_mutex_init(&q->mutex, NULL);
-
-// }
-
-// // ENCOLAR
-// void push(Queue* q, int MESSAGE) {
-
-//     Node* newNode = malloc(sizeof(Node)); // CREAR Y RESERVAR MEMORIA PARA EL NUEVO NODO DE LA COLA
-//     newNode->data = MESSAGE; // EL NUMERO CALCULADO POR EL HILO
-//     newNode->next = NULL;
-    
-//     // pthread_mutex_lock(&q->mutex);
-    
-//     if (q->last == NULL) { // SI LA COLA ESTA VACÍA
-//         q->first = q->last = newNode;
-//     } else { // SI LA COLA NO ESTA VACÍA
-//         q->last->next = newNode;
-//         q->last = newNode;
-//     }
-    
-//     // pthread_mutex_unlock(&q->mutex);
-// }
-
-// // DESENCOLAR
-// int pop(Queue* q) {
-//     // pthread_mutex_lock(&q->mutex);
-    
-//     if (q->first == NULL) { // LA COLA ESTÁ VACÍA
-//         // pthread_mutex_unlock(&q->mutex);
-//         return -1;
-//     }
-    
-//     Node* temp = q->first;
-//     int msg = temp->data;
-    
-//     if (q->first == q->last) { // LA COLA SOLO TIENE 1 ELEMENTO
-
-//         q->first = q->last = NULL; // LA COLA QUEDA VACIA
-
-//     } else {
-
-//         q->first = q->first->next; // SALE EL PRIMERO DE LA COLA Y EL PRIMERO PASA A SER EL SEGUNDO
-
-//     }
-    
-//     free(temp); // LIBERAR MEMORIA
-
-//     // pthread_mutex_unlock(&q->mutex);
-    
-//     return msg;
-// }

@@ -1,16 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <math.h>
 #include <pthread.h>
+#include <math.h>
+#include <stdint.h>
+#include <time.h>
 
 //Includes
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <time.h>
 
 #define MAX_THREADS 5000
 pthread_mutex_t mutex;
@@ -19,12 +16,27 @@ int total_threads;
 int points_inside_circle = 0;
 int total_points;
 
+// CREAR UN NODO PARA ENCOLAR/DESENCOLAR CON EL PASO DE MENSAJES
+struct msg_buffer {
+
+    int points;
+
+} message;
+
 void *throw_darts(void *arg){
-
-    int *pipefds = (int *)arg; // CASTEO A int* PARA OBTENER LA PIPE
-
     int local_points = 0;
-    int childID = (uintptr_t )arg;
+
+    // INICIAMOS LA KEY DE LA COLA Y EL MSG ID
+    key_t key;
+    int msgid;
+
+    // GENERAMOS UNA CLAVE ÚNICA PARA LA COLA
+    key = ftok("queuefile", 65);
+
+    // CONECTAMOS A LA COLA DE MENSAJES CREADA Y OBTENEMOS SU ID
+    msgid = msgget(key, 0666 | IPC_CREAT);
+
+    int childID = (uintptr_t)arg;
     int points_per_thread = total_points / total_threads;
     unsigned int seed = time(NULL) * (childID + 1);
 
@@ -39,11 +51,22 @@ void *throw_darts(void *arg){
         }
     }
 
-    // USAR EL PIPE PARA ENVIAR LOS MENSAJES
-    // ABRIR FIFO EN MODO ESCRITURA
+    // CREAR EL STRUCT PARA ALMACENAR LOS DATOS
+    struct msg_buffer msg;
+
+    // CREAMOS EL MENSAJE CON LOS PUNTOS QUE GENERA CADA HILO
+    msg.points = local_points;
+
+    // BLOQUEAR EL MUTEX
     pthread_mutex_lock(&mutex);
-    write(pipefds[1], &local_points, sizeof(local_points)); // ESCRITURA
-    printf("\nPUNTOS ENCOLADOS: %i", local_points);
+
+        // ENVIAR EL NODO, MENSAJE
+        msgsnd(msgid, &msg, sizeof(message), 0);
+
+        // MOSTRAR EL PUNTO ENVIADO
+        printf("\nMensaje enviado: %i", msg.points);
+        
+    // DESBLOQUEAR EL MUTEX
     pthread_mutex_unlock(&mutex);
 
     return NULL;
@@ -53,21 +76,9 @@ void *throw_darts(void *arg){
 
 int main(int argc, char *argv[]){
 
-    // RELOJ
-    struct timespec before;
-    clock_gettime(CLOCK_MONOTONIC, &before);
 
     // DECLARA ARRAY DE INDENTIFICADORES DE HILO
     pthread_t threads[MAX_THREADS];
-
-    if (argc != 3){
-
-        printf("\n");
-		printf("%s \n Error, esto se usa: make ARGS= \" <total_points> <total_threads> \"\n", argv[0]);
-		printf("\n");
-        return 1;
-
-    }
 
     total_points = atoi(argv[1]);
     total_threads = atoi(argv[2]);
@@ -86,19 +97,27 @@ int main(int argc, char *argv[]){
 
     }
 
-    int pipefds[2];
-    // Crear un pipe
-    if (pipe(pipefds) == -1) {
-        perror("pipe");
-        exit(EXIT_FAILURE);
-    }
+    // RELOJ
+    struct timespec before;
+    clock_gettime(CLOCK_MONOTONIC, &before);
 
+    // INICIAMOS LA KEY DE LA COLA Y EL MSG ID
+    key_t key;
+    int msgid;
+
+    // GENERAMOS LA CLAVE ÚNICA PARA LA COLA
+    key = ftok("queuefile", 65);
+
+    // CREAMOS LA COLA Y OBTENEMOS SU ID
+    msgid = msgget(key, 0666 | IPC_CREAT);
+
+    //Inicialización de Mutex para evitar errores de sincronización
     pthread_mutex_init(&mutex, NULL);
 
     // IMPLEMENTACIÓN Y CREACIÓN DE LOS HILOS
     for (int i = 0; i < total_threads; i++) { // POR CADA ITERACIÓN SE USA UN ID DE HILO
 
-        if (pthread_create(&threads[i], NULL, throw_darts, (void *)pipefds) != 0) {
+        if (pthread_create(&threads[i], NULL, throw_darts, NULL) != 0) {
             perror("Error creating thread\n");
             return 1;
         }
@@ -110,23 +129,20 @@ int main(int argc, char *argv[]){
         pthread_join(threads[i], NULL);
     }
 
-
     points_inside_circle = 0;
-    // VACIAR LA PIPE Y OBTENER LOS VALORES
-    
-    close(pipefds[1]);
-    for(int i=0 ; i < total_threads ; i++){
 
-        int localPoints =0;
-        read(pipefds[0], &localPoints, sizeof(localPoints));
-        points_inside_circle = points_inside_circle + localPoints;
+    // OBTENER TODOS LOS MENSAJES
+    for (int i = 0; i < total_threads; i++) {
+
+        // RECIBIR EL MENSAJE
+        msgrcv(msgid, &message, sizeof(message), 0, 0);
+
+        // SUMA EL CONTADOR DE PUNTOS EN TOTAL
+        points_inside_circle += message.points;
 
     }
-
-    close(pipefds[0]); // CERRAR LECTURA
-
+    
     double pi = 4.0 * points_inside_circle / total_points;
-
 
     // RELOJ
     // Fuente: https://www.youtube.com/watch?v=1KQqpiXxvWQ
@@ -139,6 +155,10 @@ int main(int argc, char *argv[]){
 
     printf("\n\tValor de pi: %f\n\n", pi);
 
+    // ELIMINAMOS LA COLA
+    msgctl(msgid, IPC_RMID, NULL);
+
+    //Destruir el mutex
     pthread_mutex_destroy(&mutex);
 
     return 0;
