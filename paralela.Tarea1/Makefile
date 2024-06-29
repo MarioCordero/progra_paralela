@@ -41,3 +41,8 @@ execute_general:
 
 execute_valgrind:
 	valgrind --tool=helgrind time ./executeme $(ARGS)
+
+clean:
+	@echo "\n"
+	@echo "Limpiando archivos compilados..."
+	rm -f $(BINARY)
