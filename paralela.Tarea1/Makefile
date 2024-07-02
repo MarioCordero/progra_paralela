@@ -1,3 +1,34 @@
+# Verifying the ARGS
+ifndef ARGS
+
+$(info )
+$(info )
+$(error No se proporcionaron argumentos necesarios. Ejecute con make ARGS="[archivo] [#puntos] [#hilos]")
+
+endif
+
+# The number of args
+NUM_ARGS := $(words $(ARGS))
+
+# Verifying if the input has the 3 args
+ifeq ($(NUM_ARGS), 0)
+$(info )
+$(info )
+$(error No se proporcionaron argumentos necesarios. Ejecute con make ARGS="[archivo] [#puntos] [#hilos]")
+endif
+
+ifeq ($(NUM_ARGS), 1)
+$(info )
+$(info )
+$(error No se proporcionaron argumentos necesarios. Ejecute con make ARGS="[archivo] [#puntos] [#hilos]")
+endif
+
+ifeq ($(NUM_ARGS), 2)
+$(info )
+$(info )
+$(error No se proporcionaron argumentos necesarios. Ejecute con make ARGS="[archivo] [#puntos] [#hilos]")
+endif
+
 # NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
 all: compile_general execute_general
 valgrind: compile_valgrind execute_valgrind

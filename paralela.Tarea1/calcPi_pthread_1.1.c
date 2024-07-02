@@ -22,7 +22,7 @@ void* throw_darts(void* arg) {
 
 	// NO PROTEGER LA VARIABLE CON UN MUTEX
     if (sqrt(x * x + y * y) <= 1) {
-      points_inside_circle++;
+		points_inside_circle++;
     }
 
   }
@@ -30,13 +30,6 @@ void* throw_darts(void* arg) {
 }
 
 int main(int argc, char* argv[]) {
-
-	if (argc != 3) {
-		printf("\n");
-		printf("%s \n Error, esto se usa: make ARGS= \" <total_points> <total_threads> \"\n", argv[0]);
-		printf("\n");
-		return 1;
-	}
 
 	// Los numeros que son enviados por argumento
 	total_points = atoi(argv[1]);

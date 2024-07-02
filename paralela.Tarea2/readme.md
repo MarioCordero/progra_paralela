@@ -1,4 +1,4 @@
-# Tarea 2: Uso de pthread en Programación Paralela y Concurrente
+# Tarea 2: Uso de pthread en Programación Paralela y Concurrente en C
 ## Descripción
 En esta tarea se aborda el uso de la biblioteca pthread en C para desarrollar programas que aprovechen la programación paralela y concurrente. Se explorarán conceptos como la creación de hilos, la sincronización de hilos, el uso compartido de memoria por medio de envio de mensajes y la resolución de problemas de concurrencia.
 
