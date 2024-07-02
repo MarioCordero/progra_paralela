@@ -12,7 +12,7 @@ En esta tarea se propone calcular el valor de π utilizando el método de Monte 
         make ARGS="calcPi_pthread_1.1.c [#puntos] [#hilos]"
     ```
   
-- ### **calcularPImsg01.2.1.c**     
+- ### **calcPi_pthread_1.2.1.c**     
     Este código en C utiliza múltiples hilos para estimar el valor de pi mediante el método de Monte Carlo. Cada hilo genera puntos aleatorios dentro de un cuadrado y cuenta cuántos caen dentro de un círculo inscrito en dicho cuadrado. Los resultados de cada hilo se envían al hilo principal a través de una cola segura para concurrencia implementada con una estructura de nodos enlazados, mutex y variables de condición. El hilo principal recopila los puntos de todos los hilos y calcula el valor de pi.
 
     Ejecutar con: 
@@ -20,12 +20,12 @@ En esta tarea se propone calcular el valor de π utilizando el método de Monte 
         make ARGS="calcularPImsg01.2.1.c [#puntos] [#hilos]"
     ```
   
-- ### **calcularPImsg01.2.2.c**     
-    Este código en C estima el valor de pi usando el método de Monte Carlo, creando múltiples hilos que generan puntos aleatorios dentro de un cuadrado y cuentan cuántos caen dentro de un círculo inscrito, enviando los resultados al hilo principal a través de una cola de mensajes. El hilo principal recopila estos mensajes, calcula pi.
+- ### **calcPi_pthread_1.2.1.c**
+    Este programa en C calcula una aproximación del valor de π utilizando múltiples hilos. Al recibir dos argumentos desde la línea de comandos, el número total de puntos a lanzar y el número de hilos a emplear, primero verifica que el número de hilos no exceda un límite máximo y que el total de puntos sea divisible entre el número de hilos para asegurar una distribución uniforme. Luego, crea hilos utilizando la biblioteca pthread, donde cada hilo ejecuta la función throw_darts. Esta función genera puntos aleatorios dentro de un cuadrado unitario y cuenta cuántos caen dentro de un círculo unitario. La variable points_inside_circle se incrementa sin protección de mutex, lo que puede resultar en condiciones de carrera. Después de que todos los hilos han completado su trabajo, se calcula π aproximadamente usando la relación de puntos dentro del círculo respecto al total de puntos y se imprime el resultado. Este enfoque ilustra el uso de hilos para paralelizar cálculos intensivos y muestra cómo gestionar la concurrencia en C con pthreads.
 
     Ejecutar con: 
     ```bash
-        make ARGS="calcularPImsg01.2.2.c [#puntos] [#hilos]"
+        make ARGS="calcPi_pthread_1.2.1.c [#puntos] [#hilos]"
     ```
 
 - ### **calcularPImsg01.2.3.c**     
