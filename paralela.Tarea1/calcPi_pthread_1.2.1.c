@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 	printf("\n\n\t---------------TIEMPO DE EJECUCION------------------");
 	printf("\n\t%ld sec, %ld milisecs, %ld nanosecs. \n", secs, millisecs, nanosecs);
 
-	printf(" \n\tValor de pi: %f\n\n", pi);
+	printf("\n\tValor de pi: %f\n\n", pi);
 
 	return 0;
 }
