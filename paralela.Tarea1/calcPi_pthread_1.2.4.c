@@ -5,17 +5,11 @@
 #include <math.h>
 #include <stdint.h>
 
-#include <stdatomic.h>
-
 #define MAX_THREADS 50000 //Max amount of threads
 
 // Variables globales
 int total_threads;
-
-
-atomic_int points_inside_circle = 0; // Variable atomica
-
-
+int points_inside_circle = 0;
 int total_points;
 
 // Inicializador del mutex
@@ -45,13 +39,6 @@ void* throw_darts(void* arg) {
 
 int main(int argc, char* argv[]) {
 
-	if (argc != 3) {
-		printf("\n");
-		printf("%s \n Error, esto se usa: make ARGS= \" <total_points> <total_threads> \"\n", argv[0]);
-		printf("\n");
-		return 1;
-	}
-
 	// Los numeros que son enviados por argumento
 	total_points = atoi(argv[1]);
 	total_threads = atoi(argv[2]);
@@ -65,6 +52,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Acá deberán introducir el paralelismo
+
+	// RELOJ
+    struct timespec before;
+    clock_gettime(CLOCK_MONOTONIC, &before);
 
 	pthread_t threads[MAX_THREADS];
 
@@ -88,7 +79,18 @@ int main(int argc, char* argv[]) {
 	}
 
 	double pi = 4.0 * points_inside_circle / total_points;
-	printf(" \nValor de pi: %f\n\n", pi);
+
+	// RELOJ
+    // Fuente: https://www.youtube.com/watch?v=1KQqpiXxvWQ
+	struct timespec after;
+	clock_gettime(CLOCK_MONOTONIC, &after);
+	long secs = after.tv_sec - before.tv_sec;
+	uint64_t nanosecs = ((after.tv_sec * 1000000000) + after.tv_nsec) - ((before.tv_sec * 1000000000) + before.tv_nsec);
+	uint64_t millisecs = nanosecs / 1000000;  // Convertir nanosegundos a milisegundos
+	printf("\n\n\t---------------TIEMPO DE EJECUCION------------------");
+	printf("\n\t%ld sec, %ld milisecs, %ld nanosecs. \n", secs, millisecs, nanosecs);
+
+	printf("\n\tValor de pi: %f\n\n", pi);
 
 	// Destruccion del mutex
 	pthread_mutex_destroy(&mutex);
