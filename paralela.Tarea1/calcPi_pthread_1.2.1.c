@@ -13,20 +13,20 @@ int points_inside_circle = 0;
 int total_points;
 
 void* throw_darts(void* arg) {
-  int childID = (uintptr_t)arg;
-  int points_per_thread = total_points / total_threads;
-  unsigned int seed = time(NULL) * (childID + 1);
-  for (int i = 0; i < points_per_thread; i++) {
-    double x = (double)rand_r(&seed) / RAND_MAX;
-    double y = (double)rand_r(&seed) / RAND_MAX;
+	int childID = (uintptr_t)arg;
+	int points_per_thread = total_points / total_threads;
+	unsigned int seed = time(NULL) * (childID + 1);
+	for (int i = 0; i < points_per_thread; i++) {
+		double x = (double)rand_r(&seed) / RAND_MAX;
+		double y = (double)rand_r(&seed) / RAND_MAX;
 
-	// NO PROTEGER LA VARIABLE CON UN MUTEX
-    if (sqrt(x * x + y * y) <= 1) {
-      points_inside_circle++;
-    }
+		// NO PROTEGER LA VARIABLE CON UN MUTEX
+		if (sqrt(x * x + y * y) <= 1) {
+		points_inside_circle++;
+		}
 
-  }
-  return NULL;
+	}
+	return NULL;
 }
 
 int main(int argc, char* argv[]) {

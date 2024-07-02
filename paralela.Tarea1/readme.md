@@ -5,7 +5,7 @@ En esta tarea se propone calcular el valor de π utilizando el método de Monte 
 ## Archivos y ejecución
 
 - ### **calcPi_pthread_1.1.c** 
-    Este código implementa una aproximación paralela del valor de π usando el método de Monte Carlo. El programa acepta dos argumentos: el número total de puntos a lanzar y el número de hilos a utilizar. Divide el total de puntos entre los hilos, donde cada hilo lanza sus puntos en un cuadrado de lado 1 y cuenta cuántos puntos caen dentro del círculo de radio 1 inscripto en ese cuadrado. La función `throw_darts` se encarga de esta tarea sin protección de mutex para `points_inside_circle`, lo que puede causar problemas de concurrencia. Finalmente, el programa calcula el valor de π basado en la proporción de puntos dentro del círculo y lo imprime. Actualmente, el paralelismo no está implementado correctamente, ya que `pthread_create` no se usa para crear los hilos.
+    ***(El código del PDF pero sin modificar)*** Este código implementa una aproximación paralela del valor de π usando el método de Monte Carlo. El programa acepta dos argumentos: el número total de puntos a lanzar y el número de hilos a utilizar. Divide el total de puntos entre los hilos, donde cada hilo lanza sus puntos en un cuadrado de lado 1 y cuenta cuántos puntos caen dentro del círculo de radio 1 inscripto en ese cuadrado. La función `throw_darts` se encarga de esta tarea sin protección de mutex para `points_inside_circle`, lo que puede causar problemas de concurrencia. Finalmente, el programa calcula el valor de π basado en la proporción de puntos dentro del círculo y lo imprime. Actualmente, el paralelismo no está implementado correctamente, ya que `pthread_create` no se usa para crear los hilos.
 
     Ejecutar con:
     ```bash
