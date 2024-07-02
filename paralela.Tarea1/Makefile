@@ -30,34 +30,31 @@ $(error No se proporcionaron argumentos necesarios. Ejecute con make ARGS="[arch
 endif
 
 # NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
-all: compile_general execute_general
-valgrind: compile_valgrind execute_valgrind
+all: compile_general execute_general clean
+valgrind: compile_valgrind execute_valgrind clean
 # NOTE: Do not use ThreadSanitizer in big programs or in production
 ThreadSanitizer: compile_ThreadSanitizer execute_general
 ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general
 
-# gcc -pthread -o executeme calcPi.c
-
-# gcc -pthread -o executeme calcPi_pthread01.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread01.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread02.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread02.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread03.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread03.c -lm
-
-# gcc -pthread -o executeme calcPi_pthread04.c -lm
-# gcc -pthread -g -o executeme calcPi_pthread04.c -lm
+# The name of the file to compile
+FILE := $(word 1,$(ARGS))
+POINTS := $(word 2,$(ARGS))
+THREADS := $(word 3,$(ARGS))
+# The machine language file output
+BINARY = executeme
 
 
 
 # COMPILERS INSTANCES pthread
 compile_general:
-	gcc -pthread -o executeme calcPi_pthread05.c -lm
+	@echo "Compilando-ando $(FILE)..."
+	@echo "\n"
+	gcc -pthread -o $(BINARY) $(FILE) -lm
 
 compile_valgrind:
-	gcc -pthread -g -o executeme calcPi_pthread04.c -lm
+	@echo "Compilando-ando -Pero con VALGRIND- $(FILE)..."
+	@echo "\n"
+	gcc -pthread -g -o $(BINARY) $(FILE) -lm
 
 compile_ThreadSanitizer:
 	gcc -pthread -fsanitize=thread -o executeme calcPi_pthread03.c -lm
@@ -68,10 +65,10 @@ compile_ThreadSanitizer_clang:
 
 # EXECUTERS INSTANCES
 execute_general:
-	time ./executeme $(ARGS)
+	./$(BINARY) $(POINTS) $(THREADS)
 
 execute_valgrind:
-	valgrind --tool=helgrind time ./executeme $(ARGS)
+	valgrind --tool=helgrind time ./$(BINARY) $(POINTS) $(THREADS)
 
 clean:
 	@echo "\n"
