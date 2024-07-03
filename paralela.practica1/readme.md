@@ -2,7 +2,7 @@
 ## Descripción
 Este proyecto se enfoca en explorar el uso de la llamada al sistema fork en programas en C para crear procesos hijos. Se realizan varios ejercicios prácticos para entender cómo se comportan los procesos padre e hijo, así como para analizar el manejo de memoria y la creación de múltiples procesos.
 
-## Archivos
+## Archivos y ejecución
 - ### **practica-01-fork-01.c**
   
     Programa que crea un proceso hijo para imprimir mensajes en pantalla.
