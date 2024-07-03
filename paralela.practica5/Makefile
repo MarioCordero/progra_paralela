@@ -3,6 +3,11 @@ ifndef ARGS
 $(error No se proporcionaron argumentos. Ejecute con make ARGS="nombre del archivo")
 endif
 
+# The name of the file to compile
+FILE := $(word 1,$(ARGS))
+# The machine language file output
+BINARY = executeme
+
 # NOTE: REMEMBER INSTALL GCC VALGRIND CLANG
 all: compile_general execute_general clean
 disassemble: compile_general execute_general disassemble
@@ -15,8 +20,6 @@ ThreadSanitizer-clang: compile_ThreadSanitizer_clang execute_general disassemble
 
 # Variables
 OBJDUMP = objdump -d
-INPUTFILE = prueba.txt
-FILES = $(ARGS)
 EXECUTABLE = executeme
 
 # COMPILERS INSTANCES pthread
@@ -34,7 +37,8 @@ compile_ThreadSanitizer_clang:
 
 clean:
 	@echo "\n"
-	rm -f $(EXECUTABLE)
+	@echo "Limpiando archivos compilados..."
+	rm -f $(BINARY)
 
 # EXECUTERS INSTANCES
 execute_general:

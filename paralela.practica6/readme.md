@@ -1,4 +1,4 @@
-# Nombre del Proyecto
+# Parctica de CUDA
 
 Aprendiendo a usar CUDA.
 
