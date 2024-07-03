@@ -1,16 +1,20 @@
-all: compile_general execute_general
+all: compile_general execute_general clean
 
-# COMPILERS INSTANCES
-# gcc -o practica-01-fork-01 practica-01-fork-01.c
-# gcc -o practica-01-fork-01 practica-01-fork-02.c
-# gcc -o practica-01-fork-01 practica-01-fork-03.c
-# gcc -o practica-01-fork-01 practica-01-fork-04.c
-# gcc -o practica-01-fork-01 practica-01-fork-05.c
-# gcc -o practica-01-fork-01 practica-01-fork-06.c
-# gcc -o practica-01-fork-01 practica-01-fork-07.c
+# The name of the file to compile
+FILE := $(word 1,$(ARGS))
+# The machine language file output
+BINARY = executeme
+
 compile_general:
-	gcc -o practica-01-fork-01 practica-01-fork-08.c
+	@echo "Compilando-ando $(FILE)..."
+	@echo "\n"
+	gcc -pthread -o $(BINARY) $(FILE) -lm
 
 # EXECUTERS INSTANCES
 execute_general:
-	./practica-01-fork-01
+	./$(BINARY)
+
+clean:
+	@echo "\n"
+	@echo "Limpiando archivos compilados..."
+	rm -f $(BINARY)
